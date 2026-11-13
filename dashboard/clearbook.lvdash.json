@@ -1,0 +1,2758 @@
+{
+  "datasets": [
+    {
+      "name": "kpi_latest",
+      "displayName": "Latest month KPIs",
+      "queryLines": [
+        "-- clearbook dashboard, queries v1\n",
+        "SELECT * FROM gold_monthly_kpis WHERE segment = 'All' AND month = (SELECT max(month) FROM gold_monthly_kpis)\n"
+      ]
+    },
+    {
+      "name": "monthly_segment",
+      "displayName": "Monthly KPIs by segment",
+      "queryLines": [
+        "-- clearbook dashboard, queries v1\n",
+        "SELECT month, segment, tpv_usd, net_revenue_usd, take_rate_bps, contribution_usd, contribution_margin_pct, approval_rate_pct,\n",
+        "  refund_rate_pct, chargeback_rate_pct, active_merchants\n",
+        "FROM gold_monthly_kpis WHERE segment <> 'All'\n"
+      ]
+    },
+    {
+      "name": "forecast_all",
+      "displayName": "TPV actual and forecast",
+      "queryLines": [
+        "-- clearbook dashboard, queries v1\n",
+        "SELECT month, CASE WHEN basis = 'actual' THEN 'actual' ELSE 'forecast' END AS basis, tpv_usd, tpv_lower_usd, tpv_upper_usd, net_revenue_usd\n",
+        "FROM gold_forecast_monthly WHERE segment = 'All'\n"
+      ]
+    },
+    {
+      "name": "bva",
+      "displayName": "Budget vs actual",
+      "queryLines": [
+        "-- clearbook dashboard, queries v1\n",
+        "SELECT month, segment, budget_net_revenue_usd, actual_net_revenue_usd, revenue_variance_usd, revenue_variance_pct, volume_effect_usd,\n",
+        "  rate_effect_usd, budget_tpv_usd, actual_tpv_usd, tpv_variance_pct, budget_take_rate_bps, actual_take_rate_bps\n",
+        "FROM gold_budget_vs_actual\n"
+      ]
+    },
+    {
+      "name": "outlook",
+      "displayName": "Q4 outlook",
+      "queryLines": [
+        "-- clearbook dashboard, queries v1\n",
+        "SELECT segment, budget_net_revenue_usd, latest_estimate_net_revenue_usd, revenue_vs_budget_pct, budget_tpv_usd, latest_estimate_tpv_usd,\n",
+        "  tpv_lower_usd, tpv_upper_usd, CASE segment WHEN 'All' THEN 0 WHEN 'SMB' THEN 1 WHEN 'Mid-market' THEN 2 ELSE 3 END AS sort_order\n",
+        "FROM gold_q4_outlook ORDER BY sort_order\n"
+      ]
+    },
+    {
+      "name": "backtest",
+      "displayName": "Forecast backtest",
+      "queryLines": [
+        "-- clearbook dashboard, queries v1\n",
+        "SELECT segment, test_month, actual_tpv_usd, forecast_tpv_usd, month_error_pct, daily_mape_pct, days_inside_80pct_range_pct FROM gold_forecast_backtest\n"
+      ]
+    },
+    {
+      "name": "bridge",
+      "displayName": "TPV bridge",
+      "queryLines": [
+        "-- clearbook dashboard, queries v1\n",
+        "SELECT month, component, amount_usd FROM (\n",
+        "  SELECT month, stack(4, 'New merchants', new_usd, 'Expansion', expansion_usd, 'Contraction', contraction_usd, 'Churn', churn_usd) AS (component, amount_usd)\n",
+        "  FROM gold_tpv_bridge)\n"
+      ]
+    },
+    {
+      "name": "bridge_table",
+      "displayName": "TPV bridge table",
+      "queryLines": [
+        "-- clearbook dashboard, queries v1\n",
+        "SELECT month, start_tpv_usd, new_usd, expansion_usd, contraction_usd, churn_usd, end_tpv_usd, net_volume_retention_pct FROM gold_tpv_bridge ORDER BY month\n"
+      ]
+    },
+    {
+      "name": "unit_econ",
+      "displayName": "Merchant unit economics",
+      "queryLines": [
+        "-- clearbook dashboard, queries v1\n",
+        "SELECT merchant_name, merchant_id, segment, plan, category, country, risk_tier, tpv_usd, net_revenue_usd, take_rate_bps, contribution_usd,\n",
+        "  contribution_margin_pct, chargeback_rate_pct FROM gold_merchant_unit_economics ORDER BY contribution_usd\n"
+      ]
+    },
+    {
+      "name": "cohorts",
+      "displayName": "Cohorts",
+      "queryLines": [
+        "-- clearbook dashboard, queries v1\n",
+        "SELECT signup_quarter, month, active_merchants, tpv_usd, net_revenue_usd FROM gold_cohorts\n"
+      ]
+    },
+    {
+      "name": "cb_flagged",
+      "displayName": "Merchants over the chargeback threshold",
+      "queryLines": [
+        "-- clearbook dashboard, queries v1\n",
+        "SELECT month, merchant_name, segment, category, risk_tier, payments, chargebacks, chargeback_rate_pct, chargebacks_usd\n",
+        "FROM gold_chargeback_monitoring WHERE over_threshold ORDER BY month DESC, chargeback_rate_pct DESC\n"
+      ]
+    },
+    {
+      "name": "recon_status",
+      "displayName": "Reconciliation status",
+      "queryLines": [
+        "-- clearbook dashboard, queries v1\n",
+        "SELECT status, count(*) AS payouts FROM recon_payouts GROUP BY status\n"
+      ]
+    },
+    {
+      "name": "breaks",
+      "displayName": "Open breaks",
+      "queryLines": [
+        "-- clearbook dashboard, queries v1\n",
+        "SELECT status, merchant_name, merchant_id, value_date, due_date, paid_date, currency, expected_minor / 100 AS expected, paid_minor / 100 AS paid,\n",
+        "  difference_minor / 100 AS difference, difference_usd, age_days, bank_references\n",
+        "FROM recon_breaks ORDER BY age_days DESC, difference_usd DESC\n"
+      ]
+    },
+    {
+      "name": "ledger_check",
+      "displayName": "Ledger check",
+      "queryLines": [
+        "-- clearbook dashboard, queries v1\n",
+        "SELECT currency, journals, lines, unbalanced_journals, ledger_total FROM ledger_journal_check\n"
+      ]
+    },
+    {
+      "name": "trial_balance",
+      "displayName": "Trial balance",
+      "queryLines": [
+        "-- clearbook dashboard, queries v1\n",
+        "SELECT currency, account, account_type, debits_minor / 100 AS debits, credits_minor / 100 AS credits, net_minor / 100 AS net\n",
+        "FROM ledger_trial_balance ORDER BY currency, account\n"
+      ]
+    },
+    {
+      "name": "dq",
+      "displayName": "Data quality",
+      "queryLines": [
+        "-- clearbook dashboard, queries v1\n",
+        "SELECT 'Duplicate events removed' AS item, (SELECT count(*) - count(DISTINCT event_id) FROM bronze_payment_events) AS events\n",
+        "UNION ALL SELECT concat('Quarantined: ', array_join(rules_broken, ', ')), count(*) FROM quarantine_payment_events GROUP BY rules_broken\n",
+        "UNION ALL SELECT 'Refunds / chargebacks for unknown payments (to suspense)', count(*) FROM orphan_events\n"
+      ]
+    }
+  ],
+  "pages": [
+    {
+      "name": "executive",
+      "displayName": "Executive",
+      "pageType": "PAGE_TYPE_CANVAS",
+      "layoutVersion": "GRID_V1",
+      "layout": [
+        {
+          "widget": {
+            "name": "header",
+            "multilineTextboxSpec": {
+              "lines": [
+                "# Clearbook\n",
+                "**Payments revenue, forecast and reconciliation · simulated data (Jul–Oct 2026, 300 merchants)** · KPIs are for the latest month · TPV = total payment volume, take rate = net revenue ÷ TPV\n"
+              ]
+            }
+          },
+          "position": {
+            "x": 0,
+            "y": 0,
+            "width": 12,
+            "height": 2
+          }
+        },
+        {
+          "widget": {
+            "name": "k_tpv",
+            "queries": [
+              {
+                "name": "main_query",
+                "query": {
+                  "datasetName": "kpi_latest",
+                  "fields": [
+                    {
+                      "name": "v",
+                      "expression": "SUM(`tpv_usd`)"
+                    }
+                  ],
+                  "disaggregated": false
+                }
+              }
+            ],
+            "spec": {
+              "version": 2,
+              "widgetType": "counter",
+              "frame": {
+                "showTitle": true,
+                "title": {
+                  "value": "TPV",
+                  "fields": []
+                },
+                "showDescription": true,
+                "description": "Successful payments, latest month"
+              },
+              "encodings": {
+                "value": {
+                  "fieldName": "v",
+                  "format": {
+                    "type": "number-currency",
+                    "currencyCode": "USD",
+                    "abbreviation": "compact",
+                    "decimalPlaces": {
+                      "type": "max",
+                      "places": 1
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "position": {
+            "x": 0,
+            "y": 2,
+            "width": 2,
+            "height": 3
+          }
+        },
+        {
+          "widget": {
+            "name": "k_rev",
+            "queries": [
+              {
+                "name": "main_query",
+                "query": {
+                  "datasetName": "kpi_latest",
+                  "fields": [
+                    {
+                      "name": "v",
+                      "expression": "SUM(`net_revenue_usd`)"
+                    }
+                  ],
+                  "disaggregated": false
+                }
+              }
+            ],
+            "spec": {
+              "version": 2,
+              "widgetType": "counter",
+              "frame": {
+                "showTitle": true,
+                "title": {
+                  "value": "Net revenue",
+                  "fields": []
+                },
+                "showDescription": true,
+                "description": "Fees + dispute fees − network costs"
+              },
+              "encodings": {
+                "value": {
+                  "fieldName": "v",
+                  "format": {
+                    "type": "number-currency",
+                    "currencyCode": "USD",
+                    "abbreviation": "compact",
+                    "decimalPlaces": {
+                      "type": "max",
+                      "places": 1
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "position": {
+            "x": 2,
+            "y": 2,
+            "width": 2,
+            "height": 3
+          }
+        },
+        {
+          "widget": {
+            "name": "k_take",
+            "queries": [
+              {
+                "name": "main_query",
+                "query": {
+                  "datasetName": "kpi_latest",
+                  "fields": [
+                    {
+                      "name": "v",
+                      "expression": "SUM(`take_rate_bps`)"
+                    }
+                  ],
+                  "disaggregated": false
+                }
+              }
+            ],
+            "spec": {
+              "version": 2,
+              "widgetType": "counter",
+              "frame": {
+                "showTitle": true,
+                "title": {
+                  "value": "Take rate (bps)",
+                  "fields": []
+                },
+                "showDescription": true,
+                "description": "Net revenue ÷ TPV"
+              },
+              "encodings": {
+                "value": {
+                  "fieldName": "v",
+                  "format": {
+                    "type": "number-plain",
+                    "abbreviation": "none",
+                    "decimalPlaces": {
+                      "type": "max",
+                      "places": 1
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "position": {
+            "x": 4,
+            "y": 2,
+            "width": 2,
+            "height": 3
+          }
+        },
+        {
+          "widget": {
+            "name": "k_cm",
+            "queries": [
+              {
+                "name": "main_query",
+                "query": {
+                  "datasetName": "kpi_latest",
+                  "fields": [
+                    {
+                      "name": "v",
+                      "expression": "SUM(`contribution_margin_pct`)"
+                    }
+                  ],
+                  "disaggregated": false
+                }
+              }
+            ],
+            "spec": {
+              "version": 2,
+              "widgetType": "counter",
+              "frame": {
+                "showTitle": true,
+                "title": {
+                  "value": "Contribution margin %",
+                  "fields": []
+                },
+                "showDescription": true,
+                "description": "After operating cost and chargeback losses"
+              },
+              "encodings": {
+                "value": {
+                  "fieldName": "v",
+                  "format": {
+                    "type": "number-plain",
+                    "abbreviation": "none",
+                    "decimalPlaces": {
+                      "type": "max",
+                      "places": 1
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "position": {
+            "x": 6,
+            "y": 2,
+            "width": 2,
+            "height": 3
+          }
+        },
+        {
+          "widget": {
+            "name": "k_merchants",
+            "queries": [
+              {
+                "name": "main_query",
+                "query": {
+                  "datasetName": "kpi_latest",
+                  "fields": [
+                    {
+                      "name": "v",
+                      "expression": "SUM(`active_merchants`)"
+                    }
+                  ],
+                  "disaggregated": false
+                }
+              }
+            ],
+            "spec": {
+              "version": 2,
+              "widgetType": "counter",
+              "frame": {
+                "showTitle": true,
+                "title": {
+                  "value": "Active merchants",
+                  "fields": []
+                },
+                "showDescription": true,
+                "description": "At least one payment"
+              },
+              "encodings": {
+                "value": {
+                  "fieldName": "v",
+                  "format": {
+                    "type": "number-plain",
+                    "abbreviation": "compact",
+                    "decimalPlaces": {
+                      "type": "max",
+                      "places": 0
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "position": {
+            "x": 8,
+            "y": 2,
+            "width": 2,
+            "height": 3
+          }
+        },
+        {
+          "widget": {
+            "name": "k_approval",
+            "queries": [
+              {
+                "name": "main_query",
+                "query": {
+                  "datasetName": "kpi_latest",
+                  "fields": [
+                    {
+                      "name": "v",
+                      "expression": "SUM(`approval_rate_pct`)"
+                    }
+                  ],
+                  "disaggregated": false
+                }
+              }
+            ],
+            "spec": {
+              "version": 2,
+              "widgetType": "counter",
+              "frame": {
+                "showTitle": true,
+                "title": {
+                  "value": "Approval rate %",
+                  "fields": []
+                },
+                "showDescription": true,
+                "description": "Successful ÷ attempted payments"
+              },
+              "encodings": {
+                "value": {
+                  "fieldName": "v",
+                  "format": {
+                    "type": "number-plain",
+                    "abbreviation": "none",
+                    "decimalPlaces": {
+                      "type": "max",
+                      "places": 1
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "position": {
+            "x": 10,
+            "y": 2,
+            "width": 2,
+            "height": 3
+          }
+        },
+        {
+          "widget": {
+            "name": "tpv_forecast",
+            "queries": [
+              {
+                "name": "main_query",
+                "query": {
+                  "datasetName": "forecast_all",
+                  "fields": [
+                    {
+                      "name": "month",
+                      "expression": "`month`"
+                    },
+                    {
+                      "name": "basis",
+                      "expression": "`basis`"
+                    },
+                    {
+                      "name": "SUM(tpv_usd)",
+                      "expression": "SUM(`tpv_usd`)"
+                    }
+                  ],
+                  "disaggregated": false
+                }
+              }
+            ],
+            "spec": {
+              "version": 3,
+              "widgetType": "bar",
+              "frame": {
+                "showTitle": true,
+                "title": {
+                  "value": "TPV: actual and forecast",
+                  "fields": []
+                },
+                "showDescription": true,
+                "description": "Forecast = trend + weekday + month-start model, next 3 months (range in the table below)"
+              },
+              "mark": {
+                "layout": "stack"
+              },
+              "encodings": {
+                "x": {
+                  "fieldName": "month",
+                  "displayName": "Month",
+                  "scale": {
+                    "type": "temporal"
+                  },
+                  "axis": {
+                    "hideTitle": true
+                  }
+                },
+                "y": {
+                  "fieldName": "SUM(tpv_usd)",
+                  "displayName": "TPV",
+                  "scale": {
+                    "type": "quantitative"
+                  },
+                  "format": {
+                    "type": "number-currency",
+                    "currencyCode": "USD",
+                    "abbreviation": "compact",
+                    "decimalPlaces": {
+                      "type": "max",
+                      "places": 1
+                    }
+                  },
+                  "axis": {
+                    "hideTitle": true
+                  }
+                },
+                "color": {
+                  "fieldName": "basis",
+                  "displayName": "Basis",
+                  "scale": {
+                    "type": "categorical",
+                    "mappings": [
+                      {
+                        "value": "actual",
+                        "color": "#2f5d8c"
+                      },
+                      {
+                        "value": "forecast",
+                        "color": "#9db8d6"
+                      }
+                    ]
+                  }
+                }
+              }
+            }
+          },
+          "position": {
+            "x": 0,
+            "y": 5,
+            "width": 6,
+            "height": 7
+          }
+        },
+        {
+          "widget": {
+            "name": "rev_segment",
+            "queries": [
+              {
+                "name": "main_query",
+                "query": {
+                  "datasetName": "monthly_segment",
+                  "fields": [
+                    {
+                      "name": "month",
+                      "expression": "`month`"
+                    },
+                    {
+                      "name": "segment",
+                      "expression": "`segment`"
+                    },
+                    {
+                      "name": "SUM(net_revenue_usd)",
+                      "expression": "SUM(`net_revenue_usd`)"
+                    }
+                  ],
+                  "disaggregated": false
+                }
+              }
+            ],
+            "spec": {
+              "version": 3,
+              "widgetType": "bar",
+              "frame": {
+                "showTitle": true,
+                "title": {
+                  "value": "Net revenue by segment",
+                  "fields": []
+                },
+                "showDescription": true,
+                "description": "Enterprise brings volume, SMB brings margin"
+              },
+              "mark": {
+                "layout": "stack"
+              },
+              "encodings": {
+                "x": {
+                  "fieldName": "month",
+                  "displayName": "Month",
+                  "scale": {
+                    "type": "temporal"
+                  },
+                  "axis": {
+                    "hideTitle": true
+                  }
+                },
+                "y": {
+                  "fieldName": "SUM(net_revenue_usd)",
+                  "displayName": "Net revenue",
+                  "scale": {
+                    "type": "quantitative"
+                  },
+                  "format": {
+                    "type": "number-currency",
+                    "currencyCode": "USD",
+                    "abbreviation": "compact",
+                    "decimalPlaces": {
+                      "type": "max",
+                      "places": 1
+                    }
+                  },
+                  "axis": {
+                    "hideTitle": true
+                  }
+                },
+                "color": {
+                  "fieldName": "segment",
+                  "displayName": "Segment",
+                  "scale": {
+                    "type": "categorical",
+                    "mappings": [
+                      {
+                        "value": "SMB",
+                        "color": "#4c9f8a"
+                      },
+                      {
+                        "value": "Mid-market",
+                        "color": "#2f5d8c"
+                      },
+                      {
+                        "value": "Enterprise",
+                        "color": "#d08a3c"
+                      }
+                    ]
+                  }
+                }
+              }
+            }
+          },
+          "position": {
+            "x": 6,
+            "y": 5,
+            "width": 6,
+            "height": 7
+          }
+        },
+        {
+          "widget": {
+            "name": "take_rate",
+            "queries": [
+              {
+                "name": "main_query",
+                "query": {
+                  "datasetName": "monthly_segment",
+                  "fields": [
+                    {
+                      "name": "month",
+                      "expression": "`month`"
+                    },
+                    {
+                      "name": "segment",
+                      "expression": "`segment`"
+                    },
+                    {
+                      "name": "avg(take_rate_bps)",
+                      "expression": "AVG(`take_rate_bps`)"
+                    }
+                  ],
+                  "disaggregated": false
+                }
+              }
+            ],
+            "spec": {
+              "version": 3,
+              "widgetType": "line",
+              "frame": {
+                "showTitle": true,
+                "title": {
+                  "value": "Take rate by segment (bps)",
+                  "fields": []
+                },
+                "showDescription": true,
+                "description": "Interchange-plus pricing keeps enterprise take rate low"
+              },
+              "encodings": {
+                "x": {
+                  "fieldName": "month",
+                  "displayName": "Month",
+                  "scale": {
+                    "type": "temporal"
+                  },
+                  "axis": {
+                    "hideTitle": true
+                  }
+                },
+                "y": {
+                  "fieldName": "avg(take_rate_bps)",
+                  "displayName": "Take rate (bps)",
+                  "scale": {
+                    "type": "quantitative"
+                  },
+                  "format": {
+                    "type": "number-plain",
+                    "abbreviation": "none",
+                    "decimalPlaces": {
+                      "type": "max",
+                      "places": 1
+                    }
+                  },
+                  "axis": {
+                    "hideTitle": true
+                  }
+                },
+                "color": {
+                  "fieldName": "segment",
+                  "displayName": "Segment",
+                  "scale": {
+                    "type": "categorical",
+                    "mappings": [
+                      {
+                        "value": "SMB",
+                        "color": "#4c9f8a"
+                      },
+                      {
+                        "value": "Mid-market",
+                        "color": "#2f5d8c"
+                      },
+                      {
+                        "value": "Enterprise",
+                        "color": "#d08a3c"
+                      }
+                    ]
+                  }
+                }
+              }
+            }
+          },
+          "position": {
+            "x": 0,
+            "y": 12,
+            "width": 6,
+            "height": 6
+          }
+        },
+        {
+          "widget": {
+            "name": "margin",
+            "queries": [
+              {
+                "name": "main_query",
+                "query": {
+                  "datasetName": "monthly_segment",
+                  "fields": [
+                    {
+                      "name": "month",
+                      "expression": "`month`"
+                    },
+                    {
+                      "name": "segment",
+                      "expression": "`segment`"
+                    },
+                    {
+                      "name": "avg(contribution_margin_pct)",
+                      "expression": "AVG(`contribution_margin_pct`)"
+                    }
+                  ],
+                  "disaggregated": false
+                }
+              }
+            ],
+            "spec": {
+              "version": 3,
+              "widgetType": "line",
+              "frame": {
+                "showTitle": true,
+                "title": {
+                  "value": "Contribution margin by segment (%)",
+                  "fields": []
+                },
+                "showDescription": true,
+                "description": "Net revenue − operating cost (0.30% of TPV + 10¢ per payment) − chargeback losses"
+              },
+              "encodings": {
+                "x": {
+                  "fieldName": "month",
+                  "displayName": "Month",
+                  "scale": {
+                    "type": "temporal"
+                  },
+                  "axis": {
+                    "hideTitle": true
+                  }
+                },
+                "y": {
+                  "fieldName": "avg(contribution_margin_pct)",
+                  "displayName": "Margin %",
+                  "scale": {
+                    "type": "quantitative"
+                  },
+                  "format": {
+                    "type": "number-plain",
+                    "abbreviation": "none",
+                    "decimalPlaces": {
+                      "type": "max",
+                      "places": 1
+                    }
+                  },
+                  "axis": {
+                    "hideTitle": true
+                  }
+                },
+                "color": {
+                  "fieldName": "segment",
+                  "displayName": "Segment",
+                  "scale": {
+                    "type": "categorical",
+                    "mappings": [
+                      {
+                        "value": "SMB",
+                        "color": "#4c9f8a"
+                      },
+                      {
+                        "value": "Mid-market",
+                        "color": "#2f5d8c"
+                      },
+                      {
+                        "value": "Enterprise",
+                        "color": "#d08a3c"
+                      }
+                    ]
+                  }
+                }
+              }
+            }
+          },
+          "position": {
+            "x": 6,
+            "y": 12,
+            "width": 6,
+            "height": 6
+          }
+        },
+        {
+          "widget": {
+            "name": "bva_table",
+            "queries": [
+              {
+                "name": "main_query",
+                "query": {
+                  "datasetName": "bva",
+                  "fields": [
+                    {
+                      "name": "month",
+                      "expression": "`month`"
+                    },
+                    {
+                      "name": "segment",
+                      "expression": "`segment`"
+                    },
+                    {
+                      "name": "budget_net_revenue_usd",
+                      "expression": "`budget_net_revenue_usd`"
+                    },
+                    {
+                      "name": "actual_net_revenue_usd",
+                      "expression": "`actual_net_revenue_usd`"
+                    },
+                    {
+                      "name": "revenue_variance_usd",
+                      "expression": "`revenue_variance_usd`"
+                    },
+                    {
+                      "name": "revenue_variance_pct",
+                      "expression": "`revenue_variance_pct`"
+                    },
+                    {
+                      "name": "volume_effect_usd",
+                      "expression": "`volume_effect_usd`"
+                    },
+                    {
+                      "name": "rate_effect_usd",
+                      "expression": "`rate_effect_usd`"
+                    },
+                    {
+                      "name": "tpv_variance_pct",
+                      "expression": "`tpv_variance_pct`"
+                    },
+                    {
+                      "name": "budget_take_rate_bps",
+                      "expression": "`budget_take_rate_bps`"
+                    },
+                    {
+                      "name": "actual_take_rate_bps",
+                      "expression": "`actual_take_rate_bps`"
+                    }
+                  ],
+                  "disaggregated": true
+                }
+              }
+            ],
+            "spec": {
+              "version": 2,
+              "widgetType": "table",
+              "frame": {
+                "showTitle": true,
+                "title": {
+                  "value": "Budget vs actual – complete months",
+                  "fields": []
+                },
+                "showDescription": true,
+                "description": "Revenue variance split: volume effect = TPV gap × budget take rate; rate effect = take-rate gap × actual TPV"
+              },
+              "encodings": {
+                "columns": [
+                  {
+                    "fieldName": "month",
+                    "displayName": "Month"
+                  },
+                  {
+                    "fieldName": "segment",
+                    "displayName": "Segment"
+                  },
+                  {
+                    "fieldName": "budget_net_revenue_usd",
+                    "displayName": "Budget revenue",
+                    "format": {
+                      "type": "number-currency",
+                      "currencyCode": "USD",
+                      "abbreviation": "none",
+                      "decimalPlaces": {
+                        "type": "max",
+                        "places": 0
+                      }
+                    }
+                  },
+                  {
+                    "fieldName": "actual_net_revenue_usd",
+                    "displayName": "Actual revenue",
+                    "format": {
+                      "type": "number-currency",
+                      "currencyCode": "USD",
+                      "abbreviation": "none",
+                      "decimalPlaces": {
+                        "type": "max",
+                        "places": 0
+                      }
+                    }
+                  },
+                  {
+                    "fieldName": "revenue_variance_usd",
+                    "displayName": "Variance",
+                    "format": {
+                      "type": "number-currency",
+                      "currencyCode": "USD",
+                      "abbreviation": "none",
+                      "decimalPlaces": {
+                        "type": "max",
+                        "places": 0
+                      }
+                    }
+                  },
+                  {
+                    "fieldName": "revenue_variance_pct",
+                    "displayName": "Variance %"
+                  },
+                  {
+                    "fieldName": "volume_effect_usd",
+                    "displayName": "Volume effect",
+                    "format": {
+                      "type": "number-currency",
+                      "currencyCode": "USD",
+                      "abbreviation": "none",
+                      "decimalPlaces": {
+                        "type": "max",
+                        "places": 0
+                      }
+                    }
+                  },
+                  {
+                    "fieldName": "rate_effect_usd",
+                    "displayName": "Rate effect",
+                    "format": {
+                      "type": "number-currency",
+                      "currencyCode": "USD",
+                      "abbreviation": "none",
+                      "decimalPlaces": {
+                        "type": "max",
+                        "places": 0
+                      }
+                    }
+                  },
+                  {
+                    "fieldName": "tpv_variance_pct",
+                    "displayName": "TPV vs budget %"
+                  },
+                  {
+                    "fieldName": "budget_take_rate_bps",
+                    "displayName": "Budget take rate"
+                  },
+                  {
+                    "fieldName": "actual_take_rate_bps",
+                    "displayName": "Actual take rate"
+                  }
+                ]
+              }
+            }
+          },
+          "position": {
+            "x": 0,
+            "y": 18,
+            "width": 12,
+            "height": 5
+          }
+        },
+        {
+          "widget": {
+            "name": "outlook_table",
+            "queries": [
+              {
+                "name": "main_query",
+                "query": {
+                  "datasetName": "outlook",
+                  "fields": [
+                    {
+                      "name": "segment",
+                      "expression": "`segment`"
+                    },
+                    {
+                      "name": "budget_net_revenue_usd",
+                      "expression": "`budget_net_revenue_usd`"
+                    },
+                    {
+                      "name": "latest_estimate_net_revenue_usd",
+                      "expression": "`latest_estimate_net_revenue_usd`"
+                    },
+                    {
+                      "name": "revenue_vs_budget_pct",
+                      "expression": "`revenue_vs_budget_pct`"
+                    },
+                    {
+                      "name": "budget_tpv_usd",
+                      "expression": "`budget_tpv_usd`"
+                    },
+                    {
+                      "name": "latest_estimate_tpv_usd",
+                      "expression": "`latest_estimate_tpv_usd`"
+                    },
+                    {
+                      "name": "tpv_lower_usd",
+                      "expression": "`tpv_lower_usd`"
+                    },
+                    {
+                      "name": "tpv_upper_usd",
+                      "expression": "`tpv_upper_usd`"
+                    }
+                  ],
+                  "disaggregated": true
+                }
+              }
+            ],
+            "spec": {
+              "version": 2,
+              "widgetType": "table",
+              "frame": {
+                "showTitle": true,
+                "title": {
+                  "value": "Q4 2026 outlook vs budget",
+                  "fields": []
+                },
+                "showDescription": true,
+                "description": "Latest estimate = October actual + November–December forecast. The budget assumes a holiday uplift (+8% Nov, +12% Dec) the trend model does not include"
+              },
+              "encodings": {
+                "columns": [
+                  {
+                    "fieldName": "segment",
+                    "displayName": "Segment"
+                  },
+                  {
+                    "fieldName": "budget_net_revenue_usd",
+                    "displayName": "Budget revenue",
+                    "format": {
+                      "type": "number-currency",
+                      "currencyCode": "USD",
+                      "abbreviation": "none",
+                      "decimalPlaces": {
+                        "type": "max",
+                        "places": 0
+                      }
+                    }
+                  },
+                  {
+                    "fieldName": "latest_estimate_net_revenue_usd",
+                    "displayName": "Latest estimate",
+                    "format": {
+                      "type": "number-currency",
+                      "currencyCode": "USD",
+                      "abbreviation": "none",
+                      "decimalPlaces": {
+                        "type": "max",
+                        "places": 0
+                      }
+                    }
+                  },
+                  {
+                    "fieldName": "revenue_vs_budget_pct",
+                    "displayName": "vs budget %"
+                  },
+                  {
+                    "fieldName": "budget_tpv_usd",
+                    "displayName": "Budget TPV",
+                    "format": {
+                      "type": "number-currency",
+                      "currencyCode": "USD",
+                      "abbreviation": "none",
+                      "decimalPlaces": {
+                        "type": "max",
+                        "places": 0
+                      }
+                    }
+                  },
+                  {
+                    "fieldName": "latest_estimate_tpv_usd",
+                    "displayName": "Estimate TPV",
+                    "format": {
+                      "type": "number-currency",
+                      "currencyCode": "USD",
+                      "abbreviation": "none",
+                      "decimalPlaces": {
+                        "type": "max",
+                        "places": 0
+                      }
+                    }
+                  },
+                  {
+                    "fieldName": "tpv_lower_usd",
+                    "displayName": "TPV low (80%)",
+                    "format": {
+                      "type": "number-currency",
+                      "currencyCode": "USD",
+                      "abbreviation": "none",
+                      "decimalPlaces": {
+                        "type": "max",
+                        "places": 0
+                      }
+                    }
+                  },
+                  {
+                    "fieldName": "tpv_upper_usd",
+                    "displayName": "TPV high (80%)",
+                    "format": {
+                      "type": "number-currency",
+                      "currencyCode": "USD",
+                      "abbreviation": "none",
+                      "decimalPlaces": {
+                        "type": "max",
+                        "places": 0
+                      }
+                    }
+                  }
+                ]
+              }
+            }
+          },
+          "position": {
+            "x": 0,
+            "y": 23,
+            "width": 7,
+            "height": 5
+          }
+        },
+        {
+          "widget": {
+            "name": "backtest_table",
+            "queries": [
+              {
+                "name": "main_query",
+                "query": {
+                  "datasetName": "backtest",
+                  "fields": [
+                    {
+                      "name": "segment",
+                      "expression": "`segment`"
+                    },
+                    {
+                      "name": "actual_tpv_usd",
+                      "expression": "`actual_tpv_usd`"
+                    },
+                    {
+                      "name": "forecast_tpv_usd",
+                      "expression": "`forecast_tpv_usd`"
+                    },
+                    {
+                      "name": "month_error_pct",
+                      "expression": "`month_error_pct`"
+                    },
+                    {
+                      "name": "daily_mape_pct",
+                      "expression": "`daily_mape_pct`"
+                    },
+                    {
+                      "name": "days_inside_80pct_range_pct",
+                      "expression": "`days_inside_80pct_range_pct`"
+                    }
+                  ],
+                  "disaggregated": true
+                }
+              }
+            ],
+            "spec": {
+              "version": 2,
+              "widgetType": "table",
+              "frame": {
+                "showTitle": true,
+                "title": {
+                  "value": "Forecast backtest",
+                  "fields": []
+                },
+                "showDescription": true,
+                "description": "Trained on Jul–Sep, forecast October, compared with the actual October"
+              },
+              "encodings": {
+                "columns": [
+                  {
+                    "fieldName": "segment",
+                    "displayName": "Segment"
+                  },
+                  {
+                    "fieldName": "actual_tpv_usd",
+                    "displayName": "Actual TPV",
+                    "format": {
+                      "type": "number-currency",
+                      "currencyCode": "USD",
+                      "abbreviation": "none",
+                      "decimalPlaces": {
+                        "type": "max",
+                        "places": 0
+                      }
+                    }
+                  },
+                  {
+                    "fieldName": "forecast_tpv_usd",
+                    "displayName": "Forecast TPV",
+                    "format": {
+                      "type": "number-currency",
+                      "currencyCode": "USD",
+                      "abbreviation": "none",
+                      "decimalPlaces": {
+                        "type": "max",
+                        "places": 0
+                      }
+                    }
+                  },
+                  {
+                    "fieldName": "month_error_pct",
+                    "displayName": "Month error %"
+                  },
+                  {
+                    "fieldName": "daily_mape_pct",
+                    "displayName": "Daily error %"
+                  },
+                  {
+                    "fieldName": "days_inside_80pct_range_pct",
+                    "displayName": "Days in 80% range %"
+                  }
+                ]
+              }
+            }
+          },
+          "position": {
+            "x": 7,
+            "y": 23,
+            "width": 5,
+            "height": 5
+          }
+        }
+      ]
+    },
+    {
+      "name": "merchants",
+      "displayName": "Merchants",
+      "pageType": "PAGE_TYPE_CANVAS",
+      "layoutVersion": "GRID_V1",
+      "layout": [
+        {
+          "widget": {
+            "name": "bridge_chart",
+            "queries": [
+              {
+                "name": "main_query",
+                "query": {
+                  "datasetName": "bridge",
+                  "fields": [
+                    {
+                      "name": "month",
+                      "expression": "`month`"
+                    },
+                    {
+                      "name": "component",
+                      "expression": "`component`"
+                    },
+                    {
+                      "name": "SUM(amount_usd)",
+                      "expression": "SUM(`amount_usd`)"
+                    }
+                  ],
+                  "disaggregated": false
+                }
+              }
+            ],
+            "spec": {
+              "version": 3,
+              "widgetType": "bar",
+              "frame": {
+                "showTitle": true,
+                "title": {
+                  "value": "TPV bridge: what moved volume month to month",
+                  "fields": []
+                },
+                "showDescription": true,
+                "description": "New merchants and expansion add, contraction and churn subtract"
+              },
+              "mark": {
+                "layout": "stack"
+              },
+              "encodings": {
+                "x": {
+                  "fieldName": "month",
+                  "displayName": "Month",
+                  "scale": {
+                    "type": "temporal"
+                  },
+                  "axis": {
+                    "hideTitle": true
+                  }
+                },
+                "y": {
+                  "fieldName": "SUM(amount_usd)",
+                  "displayName": "TPV change",
+                  "scale": {
+                    "type": "quantitative"
+                  },
+                  "format": {
+                    "type": "number-currency",
+                    "currencyCode": "USD",
+                    "abbreviation": "compact",
+                    "decimalPlaces": {
+                      "type": "max",
+                      "places": 1
+                    }
+                  },
+                  "axis": {
+                    "hideTitle": true
+                  }
+                },
+                "color": {
+                  "fieldName": "component",
+                  "displayName": "Component",
+                  "scale": {
+                    "type": "categorical",
+                    "mappings": [
+                      {
+                        "value": "New merchants",
+                        "color": "#4c9f8a"
+                      },
+                      {
+                        "value": "Expansion",
+                        "color": "#8cc6a4"
+                      },
+                      {
+                        "value": "Contraction",
+                        "color": "#e0a458"
+                      },
+                      {
+                        "value": "Churn",
+                        "color": "#c8553d"
+                      }
+                    ]
+                  }
+                }
+              }
+            }
+          },
+          "position": {
+            "x": 0,
+            "y": 0,
+            "width": 6,
+            "height": 7
+          }
+        },
+        {
+          "widget": {
+            "name": "bridge_tbl",
+            "queries": [
+              {
+                "name": "main_query",
+                "query": {
+                  "datasetName": "bridge_table",
+                  "fields": [
+                    {
+                      "name": "month",
+                      "expression": "`month`"
+                    },
+                    {
+                      "name": "start_tpv_usd",
+                      "expression": "`start_tpv_usd`"
+                    },
+                    {
+                      "name": "new_usd",
+                      "expression": "`new_usd`"
+                    },
+                    {
+                      "name": "expansion_usd",
+                      "expression": "`expansion_usd`"
+                    },
+                    {
+                      "name": "contraction_usd",
+                      "expression": "`contraction_usd`"
+                    },
+                    {
+                      "name": "churn_usd",
+                      "expression": "`churn_usd`"
+                    },
+                    {
+                      "name": "end_tpv_usd",
+                      "expression": "`end_tpv_usd`"
+                    },
+                    {
+                      "name": "net_volume_retention_pct",
+                      "expression": "`net_volume_retention_pct`"
+                    }
+                  ],
+                  "disaggregated": true
+                }
+              }
+            ],
+            "spec": {
+              "version": 2,
+              "widgetType": "table",
+              "frame": {
+                "showTitle": true,
+                "title": {
+                  "value": "TPV bridge",
+                  "fields": []
+                },
+                "showDescription": true,
+                "description": "Start + new + expansion + contraction + churn = end; net volume retention = existing merchants this month ÷ last month"
+              },
+              "encodings": {
+                "columns": [
+                  {
+                    "fieldName": "month",
+                    "displayName": "Month"
+                  },
+                  {
+                    "fieldName": "start_tpv_usd",
+                    "displayName": "Start",
+                    "format": {
+                      "type": "number-currency",
+                      "currencyCode": "USD",
+                      "abbreviation": "compact",
+                      "decimalPlaces": {
+                        "type": "max",
+                        "places": 1
+                      }
+                    }
+                  },
+                  {
+                    "fieldName": "new_usd",
+                    "displayName": "New",
+                    "format": {
+                      "type": "number-currency",
+                      "currencyCode": "USD",
+                      "abbreviation": "compact",
+                      "decimalPlaces": {
+                        "type": "max",
+                        "places": 1
+                      }
+                    }
+                  },
+                  {
+                    "fieldName": "expansion_usd",
+                    "displayName": "Expansion",
+                    "format": {
+                      "type": "number-currency",
+                      "currencyCode": "USD",
+                      "abbreviation": "compact",
+                      "decimalPlaces": {
+                        "type": "max",
+                        "places": 1
+                      }
+                    }
+                  },
+                  {
+                    "fieldName": "contraction_usd",
+                    "displayName": "Contraction",
+                    "format": {
+                      "type": "number-currency",
+                      "currencyCode": "USD",
+                      "abbreviation": "compact",
+                      "decimalPlaces": {
+                        "type": "max",
+                        "places": 1
+                      }
+                    }
+                  },
+                  {
+                    "fieldName": "churn_usd",
+                    "displayName": "Churn",
+                    "format": {
+                      "type": "number-currency",
+                      "currencyCode": "USD",
+                      "abbreviation": "compact",
+                      "decimalPlaces": {
+                        "type": "max",
+                        "places": 1
+                      }
+                    }
+                  },
+                  {
+                    "fieldName": "end_tpv_usd",
+                    "displayName": "End",
+                    "format": {
+                      "type": "number-currency",
+                      "currencyCode": "USD",
+                      "abbreviation": "compact",
+                      "decimalPlaces": {
+                        "type": "max",
+                        "places": 1
+                      }
+                    }
+                  },
+                  {
+                    "fieldName": "net_volume_retention_pct",
+                    "displayName": "Net volume retention %"
+                  }
+                ]
+              }
+            }
+          },
+          "position": {
+            "x": 6,
+            "y": 0,
+            "width": 6,
+            "height": 7
+          }
+        },
+        {
+          "widget": {
+            "name": "cohort_chart",
+            "queries": [
+              {
+                "name": "main_query",
+                "query": {
+                  "datasetName": "cohorts",
+                  "fields": [
+                    {
+                      "name": "month",
+                      "expression": "`month`"
+                    },
+                    {
+                      "name": "signup_quarter",
+                      "expression": "`signup_quarter`"
+                    },
+                    {
+                      "name": "SUM(tpv_usd)",
+                      "expression": "SUM(`tpv_usd`)"
+                    }
+                  ],
+                  "disaggregated": false
+                }
+              }
+            ],
+            "spec": {
+              "version": 3,
+              "widgetType": "bar",
+              "frame": {
+                "showTitle": true,
+                "title": {
+                  "value": "TPV by sign-up cohort",
+                  "fields": []
+                },
+                "showDescription": true,
+                "description": "Merchants grouped by the quarter they joined"
+              },
+              "mark": {
+                "layout": "stack"
+              },
+              "encodings": {
+                "x": {
+                  "fieldName": "month",
+                  "displayName": "Month",
+                  "scale": {
+                    "type": "temporal"
+                  },
+                  "axis": {
+                    "hideTitle": true
+                  }
+                },
+                "y": {
+                  "fieldName": "SUM(tpv_usd)",
+                  "displayName": "TPV",
+                  "scale": {
+                    "type": "quantitative"
+                  },
+                  "format": {
+                    "type": "number-currency",
+                    "currencyCode": "USD",
+                    "abbreviation": "compact",
+                    "decimalPlaces": {
+                      "type": "max",
+                      "places": 1
+                    }
+                  },
+                  "axis": {
+                    "hideTitle": true
+                  }
+                },
+                "color": {
+                  "fieldName": "signup_quarter",
+                  "displayName": "Signed up",
+                  "scale": {
+                    "type": "categorical"
+                  }
+                }
+              }
+            }
+          },
+          "position": {
+            "x": 0,
+            "y": 7,
+            "width": 6,
+            "height": 7
+          }
+        },
+        {
+          "widget": {
+            "name": "active_seg",
+            "queries": [
+              {
+                "name": "main_query",
+                "query": {
+                  "datasetName": "monthly_segment",
+                  "fields": [
+                    {
+                      "name": "month",
+                      "expression": "`month`"
+                    },
+                    {
+                      "name": "segment",
+                      "expression": "`segment`"
+                    },
+                    {
+                      "name": "SUM(active_merchants)",
+                      "expression": "SUM(`active_merchants`)"
+                    }
+                  ],
+                  "disaggregated": false
+                }
+              }
+            ],
+            "spec": {
+              "version": 3,
+              "widgetType": "bar",
+              "frame": {
+                "showTitle": true,
+                "title": {
+                  "value": "Active merchants by segment",
+                  "fields": []
+                },
+                "showDescription": true,
+                "description": "Merchants with at least one payment in the month"
+              },
+              "mark": {
+                "layout": "stack"
+              },
+              "encodings": {
+                "x": {
+                  "fieldName": "month",
+                  "displayName": "Month",
+                  "scale": {
+                    "type": "temporal"
+                  },
+                  "axis": {
+                    "hideTitle": true
+                  }
+                },
+                "y": {
+                  "fieldName": "SUM(active_merchants)",
+                  "displayName": "Merchants",
+                  "scale": {
+                    "type": "quantitative"
+                  },
+                  "format": {
+                    "type": "number-plain",
+                    "abbreviation": "compact",
+                    "decimalPlaces": {
+                      "type": "max",
+                      "places": 0
+                    }
+                  },
+                  "axis": {
+                    "hideTitle": true
+                  }
+                },
+                "color": {
+                  "fieldName": "segment",
+                  "displayName": "Segment",
+                  "scale": {
+                    "type": "categorical",
+                    "mappings": [
+                      {
+                        "value": "SMB",
+                        "color": "#4c9f8a"
+                      },
+                      {
+                        "value": "Mid-market",
+                        "color": "#2f5d8c"
+                      },
+                      {
+                        "value": "Enterprise",
+                        "color": "#d08a3c"
+                      }
+                    ]
+                  }
+                }
+              }
+            }
+          },
+          "position": {
+            "x": 6,
+            "y": 7,
+            "width": 6,
+            "height": 7
+          }
+        },
+        {
+          "widget": {
+            "name": "unit_tbl",
+            "queries": [
+              {
+                "name": "main_query",
+                "query": {
+                  "datasetName": "unit_econ",
+                  "fields": [
+                    {
+                      "name": "merchant_name",
+                      "expression": "`merchant_name`"
+                    },
+                    {
+                      "name": "segment",
+                      "expression": "`segment`"
+                    },
+                    {
+                      "name": "plan",
+                      "expression": "`plan`"
+                    },
+                    {
+                      "name": "category",
+                      "expression": "`category`"
+                    },
+                    {
+                      "name": "risk_tier",
+                      "expression": "`risk_tier`"
+                    },
+                    {
+                      "name": "tpv_usd",
+                      "expression": "`tpv_usd`"
+                    },
+                    {
+                      "name": "net_revenue_usd",
+                      "expression": "`net_revenue_usd`"
+                    },
+                    {
+                      "name": "take_rate_bps",
+                      "expression": "`take_rate_bps`"
+                    },
+                    {
+                      "name": "contribution_usd",
+                      "expression": "`contribution_usd`"
+                    },
+                    {
+                      "name": "contribution_margin_pct",
+                      "expression": "`contribution_margin_pct`"
+                    },
+                    {
+                      "name": "chargeback_rate_pct",
+                      "expression": "`chargeback_rate_pct`"
+                    }
+                  ],
+                  "disaggregated": true
+                }
+              }
+            ],
+            "spec": {
+              "version": 2,
+              "widgetType": "table",
+              "frame": {
+                "showTitle": true,
+                "title": {
+                  "value": "Merchant unit economics – least profitable first",
+                  "fields": []
+                },
+                "showDescription": true,
+                "description": "Whole period. Contribution = net revenue − operating cost − chargeback losses"
+              },
+              "encodings": {
+                "columns": [
+                  {
+                    "fieldName": "merchant_name",
+                    "displayName": "Merchant"
+                  },
+                  {
+                    "fieldName": "segment",
+                    "displayName": "Segment"
+                  },
+                  {
+                    "fieldName": "plan",
+                    "displayName": "Plan"
+                  },
+                  {
+                    "fieldName": "category",
+                    "displayName": "Category"
+                  },
+                  {
+                    "fieldName": "risk_tier",
+                    "displayName": "Risk"
+                  },
+                  {
+                    "fieldName": "tpv_usd",
+                    "displayName": "TPV",
+                    "format": {
+                      "type": "number-currency",
+                      "currencyCode": "USD",
+                      "abbreviation": "none",
+                      "decimalPlaces": {
+                        "type": "max",
+                        "places": 0
+                      }
+                    }
+                  },
+                  {
+                    "fieldName": "net_revenue_usd",
+                    "displayName": "Net revenue",
+                    "format": {
+                      "type": "number-currency",
+                      "currencyCode": "USD",
+                      "abbreviation": "none",
+                      "decimalPlaces": {
+                        "type": "max",
+                        "places": 0
+                      }
+                    }
+                  },
+                  {
+                    "fieldName": "take_rate_bps",
+                    "displayName": "Take rate (bps)"
+                  },
+                  {
+                    "fieldName": "contribution_usd",
+                    "displayName": "Contribution",
+                    "format": {
+                      "type": "number-currency",
+                      "currencyCode": "USD",
+                      "abbreviation": "none",
+                      "decimalPlaces": {
+                        "type": "max",
+                        "places": 0
+                      }
+                    }
+                  },
+                  {
+                    "fieldName": "contribution_margin_pct",
+                    "displayName": "Margin %"
+                  },
+                  {
+                    "fieldName": "chargeback_rate_pct",
+                    "displayName": "Chargeback %"
+                  }
+                ]
+              }
+            }
+          },
+          "position": {
+            "x": 0,
+            "y": 14,
+            "width": 12,
+            "height": 9
+          }
+        }
+      ]
+    },
+    {
+      "name": "risk",
+      "displayName": "Risk & reconciliation",
+      "pageType": "PAGE_TYPE_CANVAS",
+      "layoutVersion": "GRID_V1",
+      "layout": [
+        {
+          "widget": {
+            "name": "cb_rate",
+            "queries": [
+              {
+                "name": "main_query",
+                "query": {
+                  "datasetName": "monthly_segment",
+                  "fields": [
+                    {
+                      "name": "month",
+                      "expression": "`month`"
+                    },
+                    {
+                      "name": "segment",
+                      "expression": "`segment`"
+                    },
+                    {
+                      "name": "avg(chargeback_rate_pct)",
+                      "expression": "AVG(`chargeback_rate_pct`)"
+                    }
+                  ],
+                  "disaggregated": false
+                }
+              }
+            ],
+            "spec": {
+              "version": 3,
+              "widgetType": "line",
+              "frame": {
+                "showTitle": true,
+                "title": {
+                  "value": "Chargeback rate by segment (%)",
+                  "fields": []
+                },
+                "showDescription": true,
+                "description": "Chargebacks land 15–60 days after the payment, so July is understated"
+              },
+              "encodings": {
+                "x": {
+                  "fieldName": "month",
+                  "displayName": "Month",
+                  "scale": {
+                    "type": "temporal"
+                  },
+                  "axis": {
+                    "hideTitle": true
+                  }
+                },
+                "y": {
+                  "fieldName": "avg(chargeback_rate_pct)",
+                  "displayName": "Chargeback %",
+                  "scale": {
+                    "type": "quantitative"
+                  },
+                  "format": {
+                    "type": "number-plain",
+                    "abbreviation": "none",
+                    "decimalPlaces": {
+                      "type": "max",
+                      "places": 1
+                    }
+                  },
+                  "axis": {
+                    "hideTitle": true
+                  }
+                },
+                "color": {
+                  "fieldName": "segment",
+                  "displayName": "Segment",
+                  "scale": {
+                    "type": "categorical",
+                    "mappings": [
+                      {
+                        "value": "SMB",
+                        "color": "#4c9f8a"
+                      },
+                      {
+                        "value": "Mid-market",
+                        "color": "#2f5d8c"
+                      },
+                      {
+                        "value": "Enterprise",
+                        "color": "#d08a3c"
+                      }
+                    ]
+                  }
+                }
+              }
+            }
+          },
+          "position": {
+            "x": 0,
+            "y": 0,
+            "width": 6,
+            "height": 7
+          }
+        },
+        {
+          "widget": {
+            "name": "recon_chart",
+            "queries": [
+              {
+                "name": "main_query",
+                "query": {
+                  "datasetName": "recon_status",
+                  "fields": [
+                    {
+                      "name": "status",
+                      "expression": "`status`"
+                    },
+                    {
+                      "name": "sum(payouts)",
+                      "expression": "SUM(`payouts`)"
+                    }
+                  ],
+                  "disaggregated": false
+                }
+              }
+            ],
+            "spec": {
+              "version": 3,
+              "widgetType": "bar",
+              "frame": {
+                "showTitle": true,
+                "title": {
+                  "value": "Bank reconciliation",
+                  "fields": []
+                },
+                "showDescription": true,
+                "description": "Every expected payout matched to the bank file (T+2 business days)"
+              },
+              "encodings": {
+                "x": {
+                  "fieldName": "sum(payouts)",
+                  "displayName": "Payouts",
+                  "scale": {
+                    "type": "quantitative"
+                  },
+                  "axis": {
+                    "hideTitle": true
+                  }
+                },
+                "y": {
+                  "fieldName": "status",
+                  "displayName": "Status",
+                  "scale": {
+                    "type": "categorical",
+                    "sort": {
+                      "by": "x"
+                    }
+                  },
+                  "axis": {
+                    "hideTitle": true
+                  }
+                },
+                "color": {
+                  "fieldName": "status",
+                  "displayName": "Status",
+                  "scale": {
+                    "type": "categorical",
+                    "mappings": [
+                      {
+                        "value": "matched",
+                        "color": "#4c9f8a"
+                      },
+                      {
+                        "value": "not_yet_due",
+                        "color": "#b8c1cc"
+                      },
+                      {
+                        "value": "paid_late",
+                        "color": "#e0a458"
+                      },
+                      {
+                        "value": "amount_mismatch",
+                        "color": "#d08a3c"
+                      },
+                      {
+                        "value": "duplicate_payout",
+                        "color": "#9b5de5"
+                      },
+                      {
+                        "value": "missing_payout",
+                        "color": "#c8553d"
+                      },
+                      {
+                        "value": "unexpected_payout",
+                        "color": "#6c757d"
+                      }
+                    ]
+                  }
+                }
+              }
+            }
+          },
+          "position": {
+            "x": 6,
+            "y": 0,
+            "width": 6,
+            "height": 7
+          }
+        },
+        {
+          "widget": {
+            "name": "breaks_tbl",
+            "queries": [
+              {
+                "name": "main_query",
+                "query": {
+                  "datasetName": "breaks",
+                  "fields": [
+                    {
+                      "name": "status",
+                      "expression": "`status`"
+                    },
+                    {
+                      "name": "merchant_name",
+                      "expression": "`merchant_name`"
+                    },
+                    {
+                      "name": "value_date",
+                      "expression": "`value_date`"
+                    },
+                    {
+                      "name": "due_date",
+                      "expression": "`due_date`"
+                    },
+                    {
+                      "name": "paid_date",
+                      "expression": "`paid_date`"
+                    },
+                    {
+                      "name": "currency",
+                      "expression": "`currency`"
+                    },
+                    {
+                      "name": "expected",
+                      "expression": "`expected`"
+                    },
+                    {
+                      "name": "paid",
+                      "expression": "`paid`"
+                    },
+                    {
+                      "name": "difference",
+                      "expression": "`difference`"
+                    },
+                    {
+                      "name": "difference_usd",
+                      "expression": "`difference_usd`"
+                    },
+                    {
+                      "name": "age_days",
+                      "expression": "`age_days`"
+                    }
+                  ],
+                  "disaggregated": true
+                }
+              }
+            ],
+            "spec": {
+              "version": 2,
+              "widgetType": "table",
+              "frame": {
+                "showTitle": true,
+                "title": {
+                  "value": "Open reconciliation breaks",
+                  "fields": []
+                },
+                "showDescription": true,
+                "description": "Oldest first. Amounts in the payout currency; difference also in USD"
+              },
+              "encodings": {
+                "columns": [
+                  {
+                    "fieldName": "status",
+                    "displayName": "Status"
+                  },
+                  {
+                    "fieldName": "merchant_name",
+                    "displayName": "Merchant"
+                  },
+                  {
+                    "fieldName": "value_date",
+                    "displayName": "Value date"
+                  },
+                  {
+                    "fieldName": "due_date",
+                    "displayName": "Due"
+                  },
+                  {
+                    "fieldName": "paid_date",
+                    "displayName": "Paid"
+                  },
+                  {
+                    "fieldName": "currency",
+                    "displayName": "Ccy"
+                  },
+                  {
+                    "fieldName": "expected",
+                    "displayName": "Expected"
+                  },
+                  {
+                    "fieldName": "paid",
+                    "displayName": "Paid amount"
+                  },
+                  {
+                    "fieldName": "difference",
+                    "displayName": "Difference"
+                  },
+                  {
+                    "fieldName": "difference_usd",
+                    "displayName": "Difference USD",
+                    "format": {
+                      "type": "number-currency",
+                      "currencyCode": "USD",
+                      "abbreviation": "none",
+                      "decimalPlaces": {
+                        "type": "max",
+                        "places": 0
+                      }
+                    }
+                  },
+                  {
+                    "fieldName": "age_days",
+                    "displayName": "Age (days)"
+                  }
+                ]
+              }
+            }
+          },
+          "position": {
+            "x": 0,
+            "y": 7,
+            "width": 12,
+            "height": 8
+          }
+        },
+        {
+          "widget": {
+            "name": "cb_tbl",
+            "queries": [
+              {
+                "name": "main_query",
+                "query": {
+                  "datasetName": "cb_flagged",
+                  "fields": [
+                    {
+                      "name": "month",
+                      "expression": "`month`"
+                    },
+                    {
+                      "name": "merchant_name",
+                      "expression": "`merchant_name`"
+                    },
+                    {
+                      "name": "segment",
+                      "expression": "`segment`"
+                    },
+                    {
+                      "name": "category",
+                      "expression": "`category`"
+                    },
+                    {
+                      "name": "risk_tier",
+                      "expression": "`risk_tier`"
+                    },
+                    {
+                      "name": "payments",
+                      "expression": "`payments`"
+                    },
+                    {
+                      "name": "chargebacks",
+                      "expression": "`chargebacks`"
+                    },
+                    {
+                      "name": "chargeback_rate_pct",
+                      "expression": "`chargeback_rate_pct`"
+                    },
+                    {
+                      "name": "chargebacks_usd",
+                      "expression": "`chargebacks_usd`"
+                    }
+                  ],
+                  "disaggregated": true
+                }
+              }
+            ],
+            "spec": {
+              "version": 2,
+              "widgetType": "table",
+              "frame": {
+                "showTitle": true,
+                "title": {
+                  "value": "Merchants over the 1% chargeback threshold",
+                  "fields": []
+                },
+                "showDescription": true,
+                "description": "At least 3 chargebacks and ≥ 1% of payments in the month"
+              },
+              "encodings": {
+                "columns": [
+                  {
+                    "fieldName": "month",
+                    "displayName": "Month"
+                  },
+                  {
+                    "fieldName": "merchant_name",
+                    "displayName": "Merchant"
+                  },
+                  {
+                    "fieldName": "segment",
+                    "displayName": "Segment"
+                  },
+                  {
+                    "fieldName": "category",
+                    "displayName": "Category"
+                  },
+                  {
+                    "fieldName": "risk_tier",
+                    "displayName": "Risk"
+                  },
+                  {
+                    "fieldName": "payments",
+                    "displayName": "Payments"
+                  },
+                  {
+                    "fieldName": "chargebacks",
+                    "displayName": "Chargebacks"
+                  },
+                  {
+                    "fieldName": "chargeback_rate_pct",
+                    "displayName": "Rate %"
+                  },
+                  {
+                    "fieldName": "chargebacks_usd",
+                    "displayName": "Amount",
+                    "format": {
+                      "type": "number-currency",
+                      "currencyCode": "USD",
+                      "abbreviation": "none",
+                      "decimalPlaces": {
+                        "type": "max",
+                        "places": 0
+                      }
+                    }
+                  }
+                ]
+              }
+            }
+          },
+          "position": {
+            "x": 0,
+            "y": 15,
+            "width": 7,
+            "height": 8
+          }
+        },
+        {
+          "widget": {
+            "name": "ledger_tbl",
+            "queries": [
+              {
+                "name": "main_query",
+                "query": {
+                  "datasetName": "ledger_check",
+                  "fields": [
+                    {
+                      "name": "currency",
+                      "expression": "`currency`"
+                    },
+                    {
+                      "name": "journals",
+                      "expression": "`journals`"
+                    },
+                    {
+                      "name": "lines",
+                      "expression": "`lines`"
+                    },
+                    {
+                      "name": "unbalanced_journals",
+                      "expression": "`unbalanced_journals`"
+                    },
+                    {
+                      "name": "ledger_total",
+                      "expression": "`ledger_total`"
+                    }
+                  ],
+                  "disaggregated": true
+                }
+              }
+            ],
+            "spec": {
+              "version": 2,
+              "widgetType": "table",
+              "frame": {
+                "showTitle": true,
+                "title": {
+                  "value": "Ledger integrity",
+                  "fields": []
+                },
+                "showDescription": true,
+                "description": "Every journal must sum to zero – the pipeline fails otherwise"
+              },
+              "encodings": {
+                "columns": [
+                  {
+                    "fieldName": "currency",
+                    "displayName": "Ccy"
+                  },
+                  {
+                    "fieldName": "journals",
+                    "displayName": "Journals"
+                  },
+                  {
+                    "fieldName": "lines",
+                    "displayName": "Lines"
+                  },
+                  {
+                    "fieldName": "unbalanced_journals",
+                    "displayName": "Unbalanced"
+                  },
+                  {
+                    "fieldName": "ledger_total",
+                    "displayName": "Total"
+                  }
+                ]
+              }
+            }
+          },
+          "position": {
+            "x": 7,
+            "y": 15,
+            "width": 5,
+            "height": 4
+          }
+        },
+        {
+          "widget": {
+            "name": "tb_tbl",
+            "queries": [
+              {
+                "name": "main_query",
+                "query": {
+                  "datasetName": "trial_balance",
+                  "fields": [
+                    {
+                      "name": "currency",
+                      "expression": "`currency`"
+                    },
+                    {
+                      "name": "account",
+                      "expression": "`account`"
+                    },
+                    {
+                      "name": "debits",
+                      "expression": "`debits`"
+                    },
+                    {
+                      "name": "credits",
+                      "expression": "`credits`"
+                    },
+                    {
+                      "name": "net",
+                      "expression": "`net`"
+                    }
+                  ],
+                  "disaggregated": true
+                }
+              }
+            ],
+            "spec": {
+              "version": 2,
+              "widgetType": "table",
+              "frame": {
+                "showTitle": true,
+                "title": {
+                  "value": "Trial balance",
+                  "fields": []
+                },
+                "showDescription": true,
+                "description": "Debits − credits by account (major units)"
+              },
+              "encodings": {
+                "columns": [
+                  {
+                    "fieldName": "currency",
+                    "displayName": "Ccy"
+                  },
+                  {
+                    "fieldName": "account",
+                    "displayName": "Account"
+                  },
+                  {
+                    "fieldName": "debits",
+                    "displayName": "Debits"
+                  },
+                  {
+                    "fieldName": "credits",
+                    "displayName": "Credits"
+                  },
+                  {
+                    "fieldName": "net",
+                    "displayName": "Net"
+                  }
+                ]
+              }
+            }
+          },
+          "position": {
+            "x": 7,
+            "y": 19,
+            "width": 5,
+            "height": 4
+          }
+        }
+      ]
+    },
+    {
+      "name": "data_quality",
+      "displayName": "Data quality",
+      "pageType": "PAGE_TYPE_CANVAS",
+      "layoutVersion": "GRID_V1",
+      "layout": [
+        {
+          "widget": {
+            "name": "dq_text",
+            "multilineTextboxSpec": {
+              "lines": [
+                "### Pipeline checks\n",
+                "Bronze keeps every event as delivered. Silver drops duplicates and rows that fail the expectations (they are kept in `quarantine_payment_events` with the rules they broke), and refunds or chargebacks for unknown payments are parked in the ledger's suspense account instead of touching merchant balances.\n"
+              ]
+            }
+          },
+          "position": {
+            "x": 0,
+            "y": 0,
+            "width": 12,
+            "height": 2
+          }
+        },
+        {
+          "widget": {
+            "name": "dq_tbl",
+            "queries": [
+              {
+                "name": "main_query",
+                "query": {
+                  "datasetName": "dq",
+                  "fields": [
+                    {
+                      "name": "item",
+                      "expression": "`item`"
+                    },
+                    {
+                      "name": "events",
+                      "expression": "`events`"
+                    }
+                  ],
+                  "disaggregated": true
+                }
+              }
+            ],
+            "spec": {
+              "version": 2,
+              "widgetType": "table",
+              "frame": {
+                "showTitle": true,
+                "title": {
+                  "value": "What the pipeline caught",
+                  "fields": []
+                },
+                "showDescription": true,
+                "description": "Over all loaded data"
+              },
+              "encodings": {
+                "columns": [
+                  {
+                    "fieldName": "item",
+                    "displayName": "Check"
+                  },
+                  {
+                    "fieldName": "events",
+                    "displayName": "Events"
+                  }
+                ]
+              }
+            }
+          },
+          "position": {
+            "x": 0,
+            "y": 2,
+            "width": 12,
+            "height": 5
+          }
+        }
+      ]
+    },
+    {
+      "name": "filters",
+      "displayName": "Global Filters",
+      "pageType": "PAGE_TYPE_GLOBAL_FILTERS",
+      "layoutVersion": "GRID_V1",
+      "layout": [
+        {
+          "widget": {
+            "name": "f_segment",
+            "queries": [
+              {
+                "name": "f_segment_monthly_segment",
+                "query": {
+                  "datasetName": "monthly_segment",
+                  "fields": [
+                    {
+                      "name": "segment",
+                      "expression": "`segment`"
+                    },
+                    {
+                      "name": "segment_associativity",
+                      "expression": "COUNT_IF(`associative_filter_predicate_group`)"
+                    }
+                  ],
+                  "disaggregated": false
+                }
+              },
+              {
+                "name": "f_segment_bva",
+                "query": {
+                  "datasetName": "bva",
+                  "fields": [
+                    {
+                      "name": "segment",
+                      "expression": "`segment`"
+                    },
+                    {
+                      "name": "segment_associativity",
+                      "expression": "COUNT_IF(`associative_filter_predicate_group`)"
+                    }
+                  ],
+                  "disaggregated": false
+                }
+              },
+              {
+                "name": "f_segment_unit_econ",
+                "query": {
+                  "datasetName": "unit_econ",
+                  "fields": [
+                    {
+                      "name": "segment",
+                      "expression": "`segment`"
+                    },
+                    {
+                      "name": "segment_associativity",
+                      "expression": "COUNT_IF(`associative_filter_predicate_group`)"
+                    }
+                  ],
+                  "disaggregated": false
+                }
+              },
+              {
+                "name": "f_segment_cb_flagged",
+                "query": {
+                  "datasetName": "cb_flagged",
+                  "fields": [
+                    {
+                      "name": "segment",
+                      "expression": "`segment`"
+                    },
+                    {
+                      "name": "segment_associativity",
+                      "expression": "COUNT_IF(`associative_filter_predicate_group`)"
+                    }
+                  ],
+                  "disaggregated": false
+                }
+              }
+            ],
+            "spec": {
+              "version": 2,
+              "widgetType": "filter-multi-select",
+              "frame": {
+                "showTitle": true,
+                "title": {
+                  "value": "Segment",
+                  "fields": []
+                }
+              },
+              "encodings": {
+                "fields": [
+                  {
+                    "fieldName": "segment",
+                    "queryName": "f_segment_monthly_segment"
+                  },
+                  {
+                    "fieldName": "segment",
+                    "queryName": "f_segment_bva"
+                  },
+                  {
+                    "fieldName": "segment",
+                    "queryName": "f_segment_unit_econ"
+                  },
+                  {
+                    "fieldName": "segment",
+                    "queryName": "f_segment_cb_flagged"
+                  }
+                ]
+              }
+            }
+          },
+          "position": {
+            "x": 0,
+            "y": 0,
+            "width": 2,
+            "height": 2
+          }
+        }
+      ]
+    }
+  ]
+}

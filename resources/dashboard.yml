@@ -1,0 +1,8 @@
+resources:
+  dashboards:
+    clearbook_dashboard:
+      display_name: Clearbook – payments
+      file_path: ../dashboard/clearbook.lvdash.json
+      warehouse_id: ${var.warehouse_id}
+      dataset_catalog: ${var.catalog}
+      dataset_schema: ${var.schema}

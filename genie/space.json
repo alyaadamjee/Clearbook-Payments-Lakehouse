@@ -1,0 +1,27 @@
+{
+  "title": "Clearbook – ask about payments",
+  "description": "Ask questions about Clearbook's payment volume, revenue, merchants, forecast, budget and reconciliation in plain English. All data is simulated.",
+  "tables": ["dim_merchant", "gold_budget_vs_actual", "gold_chargeback_monitoring", "gold_forecast_monthly", "gold_merchant_daily",
+             "gold_merchant_unit_economics", "gold_monthly_kpis", "gold_q4_outlook", "gold_tpv_bridge", "recon_breaks", "silver_payments"],
+  "instructions": [
+    "* Clearbook is a payments processor. Merchants take card payments through it and pay a fee per payment.",
+    "* TPV (total payment volume) = value of successful payments, column tpv_usd. Use USD columns (*_usd) for money unless asked for a currency.",
+    "* Net revenue = fee revenue + dispute fee revenue − network costs (net_revenue_usd). Take rate = net revenue ÷ TPV, shown in basis points (take_rate_bps; 100 bps = 1%).",
+    "* Contribution = net revenue − operating cost − chargeback losses (contribution_usd); contribution margin % = contribution ÷ net revenue.",
+    "* Segments are SMB, Mid-market and Enterprise. In gold_monthly_kpis the row with segment = 'All' is the total – do not add it to the segment rows.",
+    "* For monthly trends use gold_monthly_kpis; for daily or per-merchant detail use gold_merchant_daily; for merchant profitability use gold_merchant_unit_economics.",
+    "* The latest complete month is the max(month) in gold_monthly_kpis. Data starts on 2026-07-01.",
+    "* Forecasts are in gold_forecast_monthly (basis = actual, forecast or part forecast; 80% range in tpv_lower_usd / tpv_upper_usd). Budget vs actual is in gold_budget_vs_actual; the Q4 outlook in gold_q4_outlook.",
+    "* recon_breaks lists bank payouts that did not reconcile; amounts there are in minor units (cents) of the payout currency, except difference_usd.",
+    "* dim_merchant keeps history: the current version of a merchant is the row where __END_AT IS NULL.",
+    "* Chargeback rate above 1% of payments in a month is over the card-network threshold (gold_chargeback_monitoring.over_threshold)."
+  ],
+  "sample_questions": [
+    "What was TPV and net revenue by segment last month?",
+    "How did the take rate change month by month?",
+    "Which 10 merchants have the lowest contribution margin?",
+    "How did October revenue compare with budget, and why?",
+    "Which merchants were over the chargeback threshold in October?",
+    "How many reconciliation breaks are open by status?"
+  ]
+}

@@ -1,0 +1,47 @@
+resources:
+  jobs:
+    cb_backfill:
+      name: Clearbook – backfill
+      description: Create the schema, simulate Jul 1 – Oct 31 2026, run the pipeline over everything, then the forecast and budget.
+      parameters:
+        - {name: schema, default: "${var.catalog}.${var.schema}"}
+        - {name: start_date, default: "2026-07-01"}
+        - {name: end_date, default: "2026-10-31"}
+      tasks:
+        - task_key: setup
+          notebook_task: {notebook_path: ../notebooks/00_setup.py}
+        - task_key: simulate
+          depends_on: [{task_key: setup}]
+          notebook_task: {notebook_path: ../notebooks/01_simulate.py}
+        - task_key: pipeline
+          depends_on: [{task_key: simulate}]
+          pipeline_task: {pipeline_id: "${resources.pipelines.clearbook_pipeline.id}"}
+        - task_key: forecast
+          depends_on: [{task_key: pipeline}]
+          notebook_task: {notebook_path: ../notebooks/02_forecast.py}
+
+    cb_daily:
+      name: Clearbook – daily
+      description: Simulate today's feeds, run the pipeline (only new files are read), then refresh the forecast.
+      schedule: {quartz_cron_expression: "0 0 5 * * ?", timezone_id: UTC}
+      email_notifications: {on_failure: ["${var.notify_email}"]}
+      max_concurrent_runs: 1
+      parameters:
+        - {name: schema, default: "${var.catalog}.${var.schema}"}
+        - {name: start_date, default: ""}
+        - {name: end_date, default: ""}
+      tasks:
+        - task_key: simulate
+          notebook_task: {notebook_path: ../notebooks/01_simulate.py}
+        - task_key: pipeline
+          depends_on: [{task_key: simulate}]
+          pipeline_task: {pipeline_id: "${resources.pipelines.clearbook_pipeline.id}"}
+        - task_key: forecast
+          depends_on: [{task_key: pipeline}]
+          notebook_task: {notebook_path: ../notebooks/02_forecast.py}
+
+    cb_tests:
+      name: Clearbook – unit tests
+      tasks:
+        - task_key: pytest
+          notebook_task: {notebook_path: ../notebooks/run_tests.py}

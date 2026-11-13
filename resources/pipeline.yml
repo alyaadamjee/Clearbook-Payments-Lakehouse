@@ -1,0 +1,15 @@
+resources:
+  pipelines:
+    clearbook_pipeline:
+      name: Clearbook – payments pipeline
+      catalog: ${var.catalog}
+      schema: ${var.schema}
+      serverless: true
+      photon: true
+      channel: CURRENT
+      continuous: false
+      configuration:
+        clearbook.landing: /Volumes/${var.catalog}/${var.schema}/landing
+      libraries:
+        - glob:
+            include: ../pipelines/**

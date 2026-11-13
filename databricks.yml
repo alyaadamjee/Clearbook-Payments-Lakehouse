@@ -1,0 +1,30 @@
+# Clearbook – Declarative Automation Bundle: notebooks, the Lakeflow pipeline and the jobs.
+#   databricks bundle deploy
+#   databricks bundle run cb_tests
+#   databricks bundle run cb_backfill      # setup + simulate Jul 1 – Oct 31 2026 + pipeline
+bundle:
+  name: clearbook
+
+include:
+  - resources/*.yml
+
+variables:
+  catalog:
+    default: workspace
+  schema:
+    default: clearbook
+  notify_email:
+    default: ${workspace.current_user.userName}
+  warehouse_id:
+    description: SQL warehouse for the dashboard
+    lookup:
+      warehouse: Serverless Starter Warehouse
+
+targets:
+  dev:
+    default: true
+    mode: development
+  prod:
+    mode: production
+    workspace:
+      root_path: /Workspace/Users/${workspace.current_user.userName}/.bundle/${bundle.name}/prod
